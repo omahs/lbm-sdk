@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"testing"
 	"time"
@@ -256,55 +255,9 @@ func createIncrementalAccounts(accNum int) []sdk.AccAddress {
 func AddTestAddrsFromPubKeys(app *SimApp, ctx sdk.Context, pubKeys []cryptotypes.PubKey, accAmt sdk.Int) {
 	initCoins := sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), accAmt))
 
-	// fill all the addresses with some coins, set the loose pool tokens simultaneously
 	for _, pk := range pubKeys {
 		initAccountWithCoins(app, ctx, sdk.AccAddress(pk.Address()), initCoins)
 	}
-}
-
-// SortAddresses - Sorts Addresses
-func SortAddresses(addrs []sdk.AccAddress) {
-	byteAddrs := make([][]byte, len(addrs))
-
-	for i, addr := range addrs {
-		byteAddrs[i] = addr.Bytes()
-	}
-
-	SortByteArrays(byteAddrs)
-
-	for i, byteAddr := range byteAddrs {
-		addrs[i] = sdk.AccAddress(byteAddr)
-	}
-}
-
-// implement `Interface` in sort package.
-type sortByteArrays [][]byte
-
-func (b sortByteArrays) Len() int {
-	return len(b)
-}
-
-func (b sortByteArrays) Less(i, j int) bool {
-	// bytes package already implements Comparable for []byte.
-	switch bytes.Compare(b[i], b[j]) {
-	case -1:
-		return true
-	case 0, 1:
-		return false
-	default:
-		panic("not fail-able with `bytes.Comparable` bounded [-1, 1].")
-	}
-}
-
-func (b sortByteArrays) Swap(i, j int) {
-	b[j], b[i] = b[i], b[j]
-}
-
-// SortByteArrays - sorts the provided byte array
-func SortByteArrays(src [][]byte) [][]byte {
-	sorted := sortByteArrays(src)
-	sort.Sort(sorted)
-	return sorted
 }
 
 // AddTestAddrs constructs and returns accNum amount of accounts with an
@@ -328,7 +281,6 @@ func addTestAddrs(app *SimApp, ctx sdk.Context, accNum int, accAmt sdk.Int, stra
 		initAccountWithCoins(app, ctx, addr, initCoins)
 	}
 
-	SortAddresses(testAddrs)
 	return testAddrs
 }
 
@@ -416,7 +368,7 @@ func SignCheckDeliver(
 		require.Nil(t, res)
 	}
 
-	// Simulate a sending a transaction and committing a block and recheck
+	// Simulate a sending a transaction and committing a block
 	app.BeginBlock(abci.RequestBeginBlock{Header: header})
 	gInfo, res, err := app.Deliver(txCfg.TxEncoder(), tx)
 
@@ -430,9 +382,6 @@ func SignCheckDeliver(
 
 	app.EndBlock(abci.RequestEndBlock{})
 	app.Commit()
-
-	app.BeginRecheckTx(abci.RequestBeginRecheckTx{Header: header})
-	app.EndRecheckTx(abci.RequestEndRecheckTx{})
 
 	return gInfo, res, err
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
@@ -15,8 +14,6 @@ import (
 	"github.com/line/ostracon/libs/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-
-	ed255192 "github.com/line/lbm-sdk/crypto/keys/ed25519"
 
 	"github.com/line/lbm-sdk/client"
 	"github.com/line/lbm-sdk/codec"
@@ -182,7 +179,7 @@ func TestStartStandAlone(t *testing.T) {
 	svrAddr, _, err := server.FreeTCPAddr()
 	require.NoError(t, err)
 
-	svr, err := abci_server.NewServer(svrAddr, "grpc", app)
+	svr, err := abci_server.NewServer(svrAddr, "socket", app)
 	require.NoError(t, err, "error creating listener")
 
 	svr.SetLogger(logger.With("module", "abci-server"))
@@ -204,8 +201,7 @@ func TestInitNodeValidatorFiles(t *testing.T) {
 
 	require.Nil(t, err)
 	require.NotEqual(t, "", nodeID)
-	require.Equal(t, 32, len(valPubKey.Bytes()))
-	require.EqualValues(t, reflect.TypeOf(&ed255192.PubKey{}), reflect.TypeOf(valPubKey))
+	require.NotEqual(t, 0, len(valPubKey.Bytes()))
 }
 
 // custom tx codec

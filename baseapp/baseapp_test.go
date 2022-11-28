@@ -15,7 +15,6 @@ import (
 
 	"github.com/line/lbm-sdk/codec"
 	"github.com/line/lbm-sdk/codec/legacy"
-	"github.com/line/lbm-sdk/server/config"
 	"github.com/line/lbm-sdk/snapshots"
 	store "github.com/line/lbm-sdk/store/types"
 	sdk "github.com/line/lbm-sdk/types"
@@ -214,17 +213,4 @@ func TestSnapshotManager(t *testing.T) {
 	}
 	app.SetSnapshotStore(snapshotStore)
 	require.NotNil(t, app.SnapshotManager())
-}
-
-func TestSetChanCheckTxSize(t *testing.T) {
-	logger := defaultLogger()
-	db := dbm.NewMemDB()
-
-	var size = uint(100)
-
-	app := NewBaseApp(t.Name(), logger, db, nil, SetChanCheckTxSize(size))
-	require.Equal(t, int(size), cap(app.chCheckTx))
-
-	app = NewBaseApp(t.Name(), logger, db, nil)
-	require.Equal(t, config.DefaultChanCheckTxSize, cap(app.chCheckTx))
 }

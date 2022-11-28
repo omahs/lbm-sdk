@@ -295,9 +295,6 @@ func (chain *TestChain) NextBlock() {
 func (chain *TestChain) CommitBlock() {
 	chain.App.EndBlock(abci.RequestEndBlock{Height: chain.CurrentHeader.Height})
 	chain.App.Commit()
-
-	chain.App.BeginRecheckTx(abci.RequestBeginRecheckTx{Header: chain.CurrentHeader})
-	chain.App.EndRecheckTx(abci.RequestEndRecheckTx{Height: chain.CurrentHeader.Height})
 }
 
 // sendMsgs delivers a transaction through the application without returning the result.
@@ -599,7 +596,7 @@ func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.Scope
 		require.NoError(chain.T, err)
 	}
 
-	chain.CommitBlock()
+	chain.App.Commit()
 
 	chain.NextBlock()
 }
@@ -627,7 +624,7 @@ func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.Sc
 		require.NoError(chain.T, err)
 	}
 
-	chain.CommitBlock()
+	chain.App.Commit()
 
 	chain.NextBlock()
 }

@@ -203,7 +203,7 @@ func TestBaseAppBeginBlockConsensusParams(t *testing.T) {
 
 	// confirm consensus params updated into the context
 	app.BeginBlock(abci.RequestBeginBlock{Header: ocproto.Header{Height: 2}})
-	newCtx := app.getContextForTx(app.checkState, []byte{})
+	newCtx := app.getContextForTx(runTxModeCheck, []byte{})
 	require.Equal(t, maxGas, newCtx.ConsensusParams().Block.MaxGas)
 }
 

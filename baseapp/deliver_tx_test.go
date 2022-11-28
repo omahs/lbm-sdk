@@ -305,8 +305,9 @@ func TestQuery(t *testing.T) {
 	require.Equal(t, 0, len(res.Value))
 
 	// query is still empty after a CheckTx
-	_, err := app.Check(aminoTxEncoder(), tx)
+	_, resTx, err := app.Check(aminoTxEncoder(), tx)
 	require.NoError(t, err)
+	require.NotNil(t, resTx)
 	res = app.Query(query)
 	require.Equal(t, 0, len(res.Value))
 
@@ -314,7 +315,7 @@ func TestQuery(t *testing.T) {
 	header := ocproto.Header{Height: app.LastBlockHeight() + 1}
 	app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
-	_, resTx, err := app.Deliver(aminoTxEncoder(), tx)
+	_, resTx, err = app.Deliver(aminoTxEncoder(), tx)
 	require.NoError(t, err)
 	require.NotNil(t, resTx)
 	res = app.Query(query)
@@ -661,7 +662,7 @@ func TestTxGasLimits(t *testing.T) {
 				}
 			}()
 
-			count := tx.(*txTest).Counter
+			count := tx.(txTest).Counter
 			newCtx.GasMeter().ConsumeGas(uint64(count), "counter-ante")
 
 			return newCtx, nil
@@ -670,7 +671,7 @@ func TestTxGasLimits(t *testing.T) {
 
 	routerOpt := func(bapp *BaseApp) {
 		r := sdk.NewRoute(routeMsgCounter, func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-			count := msg.(msgCounter).Counter
+			count := msg.(*msgCounter).Counter
 			ctx.GasMeter().ConsumeGas(uint64(count), "counter-handler")
 			return &sdk.Result{}, nil
 		})
@@ -745,7 +746,7 @@ func TestMaxBlockGasLimits(t *testing.T) {
 				}
 			}()
 
-			count := tx.(*txTest).Counter
+			count := tx.(txTest).Counter
 			newCtx.GasMeter().ConsumeGas(uint64(count), "counter-ante")
 
 			return
@@ -754,7 +755,7 @@ func TestMaxBlockGasLimits(t *testing.T) {
 
 	routerOpt := func(bapp *BaseApp) {
 		r := sdk.NewRoute(routeMsgCounter, func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-			count := msg.(msgCounter).Counter
+			count := msg.(*msgCounter).Counter
 			ctx.GasMeter().ConsumeGas(uint64(count), "counter-handler")
 			return &sdk.Result{}, nil
 		})
@@ -800,7 +801,7 @@ func TestMaxBlockGasLimits(t *testing.T) {
 		for j := 0; j < tc.numDelivers; j++ {
 			_, result, err := app.Deliver(aminoTxEncoder(), tx)
 
-			ctx := app.deliverState.ctx
+			ctx := app.getState(runTxModeDeliver).ctx
 
 			// check for failed transactions
 			if tc.fail && (j+1) > tc.failAfterDeliver {
@@ -903,7 +904,7 @@ func TestBaseAppAnteHandler(t *testing.T) {
 	require.Empty(t, res.Events)
 	require.False(t, res.IsOK(), fmt.Sprintf("%v", res))
 
-	ctx := app.deliverState.ctx
+	ctx := app.getState(runTxModeDeliver).ctx
 	store := ctx.KVStore(capKey1)
 	require.Equal(t, int64(0), getIntFromStore(store, anteKey))
 
@@ -920,7 +921,7 @@ func TestBaseAppAnteHandler(t *testing.T) {
 	require.NotEmpty(t, res.Events)
 	require.False(t, res.IsOK(), fmt.Sprintf("%v", res))
 
-	ctx = app.deliverState.ctx
+	ctx = app.getState(runTxModeDeliver).ctx
 	store = ctx.KVStore(capKey1)
 	require.Equal(t, int64(1), getIntFromStore(store, anteKey))
 	require.Equal(t, int64(0), getIntFromStore(store, deliverKey))
@@ -936,7 +937,7 @@ func TestBaseAppAnteHandler(t *testing.T) {
 	require.NotEmpty(t, res.Events)
 	require.True(t, res.IsOK(), fmt.Sprintf("%v", res))
 
-	ctx = app.deliverState.ctx
+	ctx = app.getState(runTxModeDeliver).ctx
 	store = ctx.KVStore(capKey1)
 	require.Equal(t, int64(2), getIntFromStore(store, anteKey))
 	require.Equal(t, int64(1), getIntFromStore(store, deliverKey))
@@ -964,7 +965,7 @@ func TestGasConsumptionBadTx(t *testing.T) {
 				}
 			}()
 
-			txTest := tx.(*txTest)
+			txTest := tx.(txTest)
 			newCtx.GasMeter().ConsumeGas(uint64(txTest.Counter), "counter-ante")
 			if txTest.FailOnAnte {
 				return newCtx, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "ante handler failure")
@@ -1302,29 +1303,6 @@ func anteHandlerTxTest(t *testing.T, capKey sdk.StoreKey, storeKey []byte) sdk.A
 	}
 }
 
-// TODO(dudong2): remove this func after reverting CheckTx logic
-func anteHandlerTxTest2(t *testing.T, capKey sdk.StoreKey, storeKey []byte) sdk.AnteHandler {
-	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-		store := ctx.KVStore(capKey)
-		txTest := tx.(*txTest)
-
-		if txTest.FailOnAnte {
-			return ctx, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "ante handler failure")
-		}
-
-		_, err := incrementingCounter(t, store, storeKey, txTest.Counter)
-		if err != nil {
-			return ctx, err
-		}
-
-		ctx.EventManager().EmitEvents(
-			counterEvent("ante_handler", txTest.Counter),
-		)
-
-		return ctx, nil
-	}
-}
-
 func counterEvent(evType string, msgCount int64) sdk.Events {
 	return sdk.Events{
 		sdk.NewEvent(
@@ -1406,7 +1384,7 @@ func TestCheckTx(t *testing.T) {
 	// This ensures changes to the kvstore persist across successive CheckTx.
 	counterKey := []byte("counter-key")
 
-	anteOpt := func(bapp *BaseApp) { bapp.SetAnteHandler(anteHandlerTxTest2(t, capKey1, counterKey)) }
+	anteOpt := func(bapp *BaseApp) { bapp.SetAnteHandler(anteHandlerTxTest(t, capKey1, counterKey)) }
 	routerOpt := func(bapp *BaseApp) {
 		// TODO: can remove this once CheckTx doesnt process msgs.
 		bapp.Router().AddRoute(sdk.NewRoute(routeMsgCounter, func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
@@ -1427,8 +1405,9 @@ func TestCheckTx(t *testing.T) {
 		tx := newTxCounter(i, 0) // no messages
 		txBytes, err := codec.Marshal(tx)
 		require.NoError(t, err)
-		_, err = app.checkTx(txBytes, tx, false)
-		require.NoError(t, err)
+		r := app.CheckTx(abci.RequestCheckTx{Tx: txBytes})
+		require.Empty(t, r.GetEvents())
+		require.True(t, r.IsOK(), fmt.Sprintf("%v", r))
 	}
 
 	checkStateStore := app.checkState.ctx.KVStore(capKey1)
@@ -1446,9 +1425,6 @@ func TestCheckTx(t *testing.T) {
 
 	app.EndBlock(abci.RequestEndBlock{})
 	app.Commit()
-
-	// reset CheckTx state
-	app.BeginRecheckTx(abci.RequestBeginRecheckTx{Header: header})
 
 	checkStateStore = app.checkState.ctx.KVStore(capKey1)
 	storedBytes := checkStateStore.Get(counterKey)
