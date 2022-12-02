@@ -235,7 +235,6 @@ func (s queryServer) Grants(c context.Context, req *foundation.QueryGrantsReques
 		}
 
 		return &foundation.QueryGrantsResponse{Authorizations: authorizations}, nil
-
 	}
 
 	keyPrefix := grantKeyPrefixByGrantee(grantee)

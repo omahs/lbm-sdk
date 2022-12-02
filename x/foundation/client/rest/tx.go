@@ -8,7 +8,7 @@ import (
 	"github.com/line/lbm-sdk/client"
 )
 
-func DummyRESTHandler(_ client.Context) govrest.ProposalRESTHandler {
+func DummyRESTHandler(_ client.Context) govrest.ProposalRESTHandler { // ??
 	return govrest.ProposalRESTHandler{
 		SubRoute: "foundation",
 		Handler:  func(_ http.ResponseWriter, _ *http.Request) {},

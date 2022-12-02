@@ -8,7 +8,7 @@ import (
 	"github.com/line/lbm-sdk/x/foundation"
 )
 
-const gasCostPerIteration = uint64(20)
+const gasCostPerIteration = uint64(20) // 얘는 왜 여기있냐?
 
 type msgServer struct {
 	keeper Keeper

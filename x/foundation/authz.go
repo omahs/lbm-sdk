@@ -39,7 +39,7 @@ type AcceptResponse struct {
 	Updated Authorization
 }
 
-var _ Authorization = (*ReceiveFromTreasuryAuthorization)(nil)
+var _ Authorization = (*ReceiveFromTreasuryAuthorization)(nil) // WithdrawFromTreasuryAuthorization로 쓰는게 일관성있지 않나?
 
 func (a ReceiveFromTreasuryAuthorization) MsgTypeURL() string {
 	return sdk.MsgTypeURL(&MsgWithdrawFromTreasury{})

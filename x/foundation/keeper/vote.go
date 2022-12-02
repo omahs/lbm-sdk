@@ -13,7 +13,7 @@ func (k Keeper) Vote(ctx sdk.Context, vote foundation.Vote) error {
 
 	// Make sure that a voter hasn't already voted.
 	voter := sdk.MustAccAddressFromBech32(vote.Voter)
-	if k.hasVote(ctx, vote.ProposalId, voter) {
+	if k.hasVote(ctx, vote.ProposalId, voter) { // gov도 바꿀 수 없나??
 		return sdkerrors.ErrInvalidRequest.Wrapf("Already voted: %s", vote.Voter)
 	}
 
@@ -26,7 +26,7 @@ func (k Keeper) Vote(ctx sdk.Context, vote foundation.Vote) error {
 	if proposal.Status != foundation.PROPOSAL_STATUS_SUBMITTED {
 		return sdkerrors.ErrInvalidRequest.Wrapf("not possible with proposal status: %s", proposal.Status)
 	}
-	if !ctx.BlockTime().Before(proposal.VotingPeriodEnd) {
+	if !ctx.BlockTime().Before(proposal.VotingPeriodEnd) { // 왜 After를 안씀?
 		return sdkerrors.ErrInvalidRequest.Wrap("voting period has ended already")
 	}
 

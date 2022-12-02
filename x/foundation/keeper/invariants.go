@@ -15,7 +15,7 @@ const (
 
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(foundation.ModuleName, moduleAccountInvariant, ModuleAccountInvariant(k))
-	ir.RegisterRoute(foundation.ModuleName, totalWeightInvariant, ProposalInvariant(k))
+	ir.RegisterRoute(foundation.ModuleName, totalWeightInvariant, TotalWeightInvariant(k))
 	ir.RegisterRoute(foundation.ModuleName, proposalInvariant, ProposalInvariant(k))
 }
 

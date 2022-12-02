@@ -24,7 +24,7 @@ message GenesisState {
   repeated Member members = 3 [(gogoproto.nullable) = false];
 
   // it is used to get the next proposal ID.
-  uint64 previous_proposal_id = 4;
+  uint64 previous_proposal_id = 4; // ??
 
   // proposals is the list of proposals.
   repeated Proposal proposals = 5 [(gogoproto.nullable) = false];

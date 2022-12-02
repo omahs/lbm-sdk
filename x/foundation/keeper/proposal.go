@@ -95,7 +95,7 @@ func (k Keeper) pruneProposal(ctx sdk.Context, proposal foundation.Proposal) {
 // PruneExpiredProposals prunes all proposals which are expired,
 // i.e. whose `submit_time + voting_period + max_execution_period` is smaller than (or equal to) now.
 func (k Keeper) PruneExpiredProposals(ctx sdk.Context) {
-	votingPeriodEnd := ctx.BlockTime().Add(-k.config.MaxExecutionPeriod).Add(time.Nanosecond)
+	votingPeriodEnd := ctx.BlockTime().Add(-k.config.MaxExecutionPeriod).Add(time.Nanosecond) // submit_time + voting_period를 넘어간 proposals를 prune한다는건데 얘네들 execution period에 들어온 애들 아닌가? 아직 exec안했으면 어떡해?
 
 	var proposals []foundation.Proposal
 	k.iterateProposalsByVPEnd(ctx, votingPeriodEnd, func(proposal foundation.Proposal) (stop bool) {

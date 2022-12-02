@@ -32,7 +32,7 @@ func (k Keeper) Exec(ctx sdk.Context, proposalID uint64) error {
 	}
 
 	if proposal.Status != foundation.PROPOSAL_STATUS_SUBMITTED &&
-		proposal.Status != foundation.PROPOSAL_STATUS_ACCEPTED {
+		proposal.Status != foundation.PROPOSAL_STATUS_ACCEPTED { // 언제 accepted로 되나? accepted로 된건 이미 exec된거 아닌가? -> 아... try로 들어가서 자동적으로 tally를 한 proposal은 들어와도 exec을 수행 안했을 수 있겠군!
 		return sdkerrors.ErrInvalidRequest.Wrapf("not possible with proposal status: %s", proposal.Status)
 	}
 
@@ -45,7 +45,7 @@ func (k Keeper) Exec(ctx sdk.Context, proposalID uint64) error {
 	// Execute proposal payload.
 	var logs string
 	if proposal.Status == foundation.PROPOSAL_STATUS_ACCEPTED &&
-		proposal.ExecutorResult != foundation.PROPOSAL_EXECUTOR_RESULT_SUCCESS {
+		proposal.ExecutorResult != foundation.PROPOSAL_EXECUTOR_RESULT_SUCCESS { // 애초에 executor result가 success라면 여기 들어올 필요조차 없는게 아닌가?
 		logger := ctx.Logger().With("module", fmt.Sprintf("x/%s", foundation.ModuleName))
 		// Caching context so that we don't update the store in case of failure.
 		ctx, flush := ctx.CacheContext()
@@ -64,7 +64,7 @@ func (k Keeper) Exec(ctx sdk.Context, proposalID uint64) error {
 	if proposal.ExecutorResult == foundation.PROPOSAL_EXECUTOR_RESULT_SUCCESS {
 		k.pruneProposal(ctx, *proposal)
 	} else {
-		k.setProposal(ctx, *proposal)
+		k.setProposal(ctx, *proposal) // 이건 왜 해주는건가? prune안했으면 그대로 store에 남아있는거 아닌가?
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&foundation.EventExec{

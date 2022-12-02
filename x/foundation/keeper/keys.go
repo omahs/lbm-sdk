@@ -126,7 +126,7 @@ func grantKey(grantee sdk.AccAddress, url string) []byte {
 
 func grantKeyPrefixByGrantee(grantee sdk.AccAddress) []byte {
 	prefix := grantKeyPrefix
-	key := make([]byte, len(prefix)+1+len(grantee))
+	key := make([]byte, len(prefix)+1+len(grantee)) // 왜 얘만 1을 추가하고 있나?
 
 	begin := 0
 	copy(key[begin:], prefix)

@@ -75,7 +75,7 @@ func (i FoundationInfo) ValidateBasic() error {
 
 	// Is foundation outsourcing the proposal feature
 	_, isOutsourcing := i.GetDecisionPolicy().(*OutsourcingDecisionPolicy)
-	memberExists := !i.TotalWeight.IsZero()
+	memberExists := !i.TotalWeight.IsZero() // memberExists := i.TotalWeight.GT(sdk.ZeroDec())로 바꾸는게?
 	if isOutsourcing && memberExists {
 		return sdkerrors.ErrInvalidRequest.Wrap("outsourcing policy not allows members")
 	}

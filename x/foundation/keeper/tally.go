@@ -44,7 +44,7 @@ func (k Keeper) tally(ctx sdk.Context, p foundation.Proposal) (foundation.TallyR
 	// If proposal has already been tallied and updated, then its status is
 	// accepted/rejected, in which case we just return the previously stored result.
 	//
-	// In all other cases (including withdrawn, aborted...) we do the tally
+	// In all other cases (including withdrawn, aborted...) we do the tally // withdrawn, aborted는 왜 다시 tally를 하는가? 이미 끝났잖아...;;;
 	// again.
 	if p.Status == foundation.PROPOSAL_STATUS_ACCEPTED || p.Status == foundation.PROPOSAL_STATUS_REJECTED {
 		return p.FinalTallyResult, nil
